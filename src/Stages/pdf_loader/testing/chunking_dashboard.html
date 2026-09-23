@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG VenSys · Kualitas chunking</title>
+<style>
+:root{color-scheme:light;--ink:#193045;--muted:#56687a;--line:#dbe4eb;--blue:#2463c4;--teal:#087f78;--amber:#a66a08;--red:#b33340}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f8;color:var(--ink);font:16px/1.55 system-ui,sans-serif}main{max-width:1180px;margin:auto;padding:36px 24px 60px}h1{font-size:34px;letter-spacing:-1px;margin:8px 0}h2{font-size:21px;margin:0 0 8px}p{margin:6px 0 18px}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--teal);font-weight:750}.muted{color:var(--muted)}.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:24px;margin-top:22px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{border-top:4px solid var(--blue)}.card:nth-child(2){border-top-color:var(--teal)}.card:nth-child(3){border-top-color:var(--amber)}.value{font-size:36px;font-weight:700}.small{font-size:13px}.pill{display:inline-block;border-radius:5px;background:#e8f3f1;color:#08665f;padding:3px 8px;font-size:13px}.bad{color:var(--red);background:#fff0f1}.controls{display:flex;gap:18px;align-items:end;flex-wrap:wrap;margin:18px 0}label{font-size:14px;font-weight:600;display:block}select{display:block;font:inherit;padding:9px 12px;border:1px solid #9aabb9;border-radius:7px;background:#fff;margin-top:5px}svg{width:100%;height:auto;display:block}svg text{font:13px system-ui;fill:var(--muted)}.scroll{overflow-x:auto}.scroll svg{min-width:620px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;text-transform:uppercase;letter-spacing:.4px}td.num{text-align:right;font-variant-numeric:tabular-nums}.legend{display:flex;gap:20px;flex-wrap:wrap;font-size:13px}.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}.notice{border-left:4px solid var(--amber);padding:10px 15px;background:#fff8e9}.issues{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}.bar:focus{outline:2px solid #193045}footer{margin-top:24px;font-size:13px;color:var(--muted)}@media(max-width:700px){main{padding:22px 14px}.cards{grid-template-columns:1fr}.panel{padding:18px}h1{font-size:27px}}@media print{body{background:white}.panel{break-inside:avoid}.controls{display:none}}
+.cards{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.card:nth-child(4){border-top-color:#794fb6}
+</style>
+</head>
+<body><main>
+<header><div class="eyebrow">RAG VENSYS / AUDIT DOKUMEN</div><h1>Seberapa baik potongan dokumen lu?</h1>
+<p class="muted">Perbandingan empat strategi · ukuran kata dan token BGE-M3, kelengkapan isi, dan konsistensi overlap · seluruh data tersimpan lokal.</p></header>
+<div class="notice">Audit statis, bukan akurasi retrieval. Sumber TXT bersih dan Markdown berbeda; grafik ini tidak menetapkan pemenang RAG.</div>
+<section id="cards" class="cards" aria-label="Ringkasan strategi"></section>
+<section class="panel"><h2>Token BGE-M3 pada semua strategi</h2><p class="small muted">Hitungan token tanpa truncation. Min/median/max mengecualikan special tokens; pemeriksaan batas model 8192 token menyertakan special tokens. Budget 480 token adalah konfigurasi strategi token, bukan batas maksimum model.</p><div class="scroll"><table><thead><tr><th>Strategi</th><th>Token min / median / max</th><th>Melebihi input model</th></tr></thead><tbody id="tokens-summary"></tbody></table></div></section>
+<section class="panel"><h2>Kelengkapan isi dan batas chunk</h2>
+<p class="small muted">Coverage window menguji lima kata yang tetap bersama dalam satu chunk. Rekonstruksi menguji urutan seluruh kata, termasuk pengulangan. Coverage rendah dapat berasal dari batas chunk meskipun rekonstruksi identik.</p>
+<div class="scroll"><table><thead><tr><th>Strategi</th><th>Coverage window body</th><th>Rekonstruksi isi</th><th>Kata sumber → rekonstruksi</th></tr></thead><tbody id="coverage"></tbody></table></div></section>
+<section class="panel"><h2>Panjang setiap chunk</h2>
+<div class="controls"><label>Strategi<select id="strategy"><option value="char">Berbasis kata</option><option value="header">Heading</option><option value="header_overlap">Heading + overlap</option><option value="token">Berbasis token BGE-M3</option></select></label>
+<label>Ukuran yang dilihat<select id="measure"><option value="words">Seluruh chunk · kata</option><option value="core_words">Isi inti · kata</option><option value="tokens">Seluruh chunk · token BGE-M3</option></select></label></div>
+<div class="legend"><span><i class="dot" style="background:#2463c4"></i>Dalam rentang tinjauan</span><span><i class="dot" style="background:#a66a08"></i>Pendek</span><span><i class="dot" style="background:#b33340"></i>Panjang</span></div>
+<div class="scroll"><svg id="length-chart" viewBox="0 0 1040 340" role="img" aria-label="Panjang chunk dalam kata; sumbu horizontal nomor chunk"></svg></div>
+<p id="length-summary" class="small muted" aria-live="polite"></p></section>
+<section class="panel"><h2>Distribusi ukuran — skala yang sama</h2><p id="distribution-note" class="small muted">Persentase chunk per kelompok ukuran; mengikuti pilihan satuan di atas.</p>
+<div class="scroll"><svg id="distribution" viewBox="0 0 1040 265" role="img" aria-label="Perbandingan distribusi ukuran empat strategi"></svg></div></section>
+<section class="panel"><h2>Overlap heading yang perlu diperiksa</h2><p class="small muted">Prefix harus cocok dengan kata-kata akhir isi inti chunk sebelumnya. Isi yang ikut tersalin dari overlap lebih lama ditandai gagal.</p><div id="overlap" class="issues"></div></section>
+<section class="panel"><h2>Detail chunk terpilih</h2><p class="small muted">Tabel mengikuti pilihan strategi di atas. Angka kata termasuk seluruh isi tersimpan; kolom inti mengecualikan wrapper overlap.</p>
+<div class="scroll"><table><thead><tr><th>#</th><th>Bagian</th><th>Kata</th><th>Inti kata</th><th>Token isi</th><th>Token input</th><th>Prefix kata</th><th>Ukuran kata</th><th>Sumber / halaman</th></tr></thead><tbody id="detail"></tbody></table></div></section>
+<section class="panel"><h2>Validasi data</h2><div id="issues" class="issues"></div></section>
+<footer>Snapshot dibuat saat evaluator dijalankan. Jalankan ulang evaluate_chunking.py untuk memperbarui. Rekonstruksi word chunk mengasumsikan overlap suffix–prefix terpanjang pada section sama. Validasi terhadap halaman PDF dan pengujian retrieval belum dilakukan.</footer>
+</main>
+<script id="report-data" type="application/json">__REPORT_JSON__</script>
+<script>
+"use strict";
+const report=JSON.parse(document.getElementById('report-data').textContent);
+const results=report.results, names={char:'Berbasis kata',header:'Heading',header_overlap:'Heading + overlap',token:'Token BGE-M3'};
+const colors=['#a66a08','#2463c4','#b33340'];
+const el=id=>document.getElementById(id);
+function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;}
+function svgNode(svg,tag,attrs,text){const n=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [k,v] of Object.entries(attrs))n.setAttribute(k,v);if(text!==undefined)n.textContent=text;svg.append(n);return n;}
+function limits(){return el('measure').value==='tokens'?[report.settings.overlap_token_budget,report.settings.chunk_token_budget]:[report.settings.min_words,report.settings.max_words];}
+function unit(){return el('measure').value==='tokens'?'token':'kata';}
+function sizeFlag(n){const [min,max]=limits();return n<min?0:n>max?2:1;}
+function cells(row,values){values.forEach(v=>row.append(node('td',v)));}
+for(const [key,r] of Object.entries(results)){
+ const card=node('article',undefined,'panel card');card.append(node('h2',names[key]));
+ if(r.fatal_error){card.append(node('p',r.fatal_error,'bad'));el('cards').append(card);continue;}
+ card.append(node('div',r.chunk_count+' chunk','value'),node('p',`Median ${r.word_stats.median} kata · rentang ${r.word_stats.min}–${r.word_stats.max}`,'small muted'),node('span',r.strict_json_error?'JSON belum valid':'JSON valid',r.strict_json_error?'pill bad':'pill'));el('cards').append(card);
+ const tr=node('tr');const reconstruction=r.reconstruction;cells(tr,[names[key],(r.source_window_coverage.ratio*100).toFixed(2)+'%',reconstruction.exact?'IDENTIK':'BERBEDA',`${reconstruction.source_words} → ${reconstruction.reconstructed_words}`]);el('coverage').append(tr);
+ const tokenRow=node('tr');cells(tokenRow,[names[key],`${r.token_stats.min} / ${r.token_stats.median} / ${r.token_stats.max}`,r.over_model_limit_chunks.length]);el('tokens-summary').append(tokenRow);
+}
+function drawLength(){
+ const key=el('strategy').value,r=results[key],measure=el('measure').value,svg=el('length-chart');svg.replaceChildren();el('detail').replaceChildren();
+ if(!r||r.fatal_error){el('length-summary').textContent=r?.fatal_error||'Data tidak tersedia';return;}
+ const values=r.chunks.map(c=>c[measure]),max=Math.ceil(Math.max(limits()[1]*1.15,...values)/100)*100;
+ const x0=60,y0=280,w=950,h=245,step=w/values.length;
+ svgNode(svg,'title',{},`${names[key]}: panjang ${values.length} chunk dalam ${unit()}`);
+ for(let i=0;i<=4;i++){const value=max*i/4,y=y0-h*i/4;svgNode(svg,'line',{x1:x0,y1:y,x2:x0+w,y2:y,stroke:'#e1e8ee'});svgNode(svg,'text',{x:50,y:y+4,'text-anchor':'end'},Math.round(value));}
+ for(const threshold of limits()){const y=y0-h*threshold/max;svgNode(svg,'line',{x1:x0,y1:y,x2:x0+w,y2:y,stroke:'#8193a1','stroke-dasharray':'4 4'});svgNode(svg,'text',{x:x0+w,y:y-4,'text-anchor':'end'},threshold+' '+unit());}
+ values.forEach((v,i)=>{const rect=svgNode(svg,'rect',{x:x0+i*step+1,y:y0-h*v/max,width:Math.max(1,step-2),height:h*v/max,fill:colors[sizeFlag(v)],class:'bar',tabindex:0,'aria-label':`Chunk ${i+1}: ${v} ${unit()}`});svgNode(rect,'title',{},`Chunk ${i+1} · ${v} ${unit()} · ${r.chunks[i].section}`);if(i%Math.ceil(values.length/15)===0||i===values.length-1)svgNode(svg,'text',{x:x0+(i+.5)*step,y:y0+23,'text-anchor':'middle'},i+1);});
+ svgNode(svg,'text',{x:60,y:19},unit());svgNode(svg,'text',{x:535,y:328,'text-anchor':'middle'},'Nomor chunk');
+ el('length-summary').textContent=`${r.file} · sumber: ${r.source} · ${values.filter(v=>sizeFlag(v)===0).length} pendek, ${values.filter(v=>sizeFlag(v)===2).length} panjang. Rentang tinjauan ${limits().join('–')} ${unit()}; bukan batas model.`;
+ for(const c of r.chunks){const tr=node('tr');cells(tr,[c.chunk,c.section||'—',c.words,c.core_words,c.tokens,c.input_tokens,c.overlap_prefix_words,{short:'Pendek',ok:'Dalam rentang',long:'Panjang'}[c.size_flag],`${c.has_source?'Ada':'Tidak'} / ${c.has_page?'Ada':'Tidak'}`]);el('detail').append(tr);}
+}
+function drawDistribution(){const svg=el('distribution');svg.replaceChildren();svgNode(svg,'title',{},'Distribusi panjang chunk pada skala 0 hingga 100 persen');let y=35;for(const [key,r] of Object.entries(results)){svgNode(svg,'text',{x:5,y:y+18},names[key]);if(r.fatal_error){svgNode(svg,'text',{x:210,y:y+18},'Data tidak tersedia');y+=52;continue;}const counts=[0,0,0];r.chunks.forEach(c=>counts[sizeFlag(c[el('measure').value])]++);let x=210;counts.forEach((count,i)=>{const width=count/r.chunk_count*790;if(width){const mark=svgNode(svg,'rect',{x,y,width,height:30,fill:colors[i]});svgNode(mark,'title',{},`${['Pendek','Dalam rentang','Panjang'][i]}: ${count} chunk (${(count/r.chunk_count*100).toFixed(1)}%)`);if(width>48)svgNode(svg,'text',{x:x+width/2,y:y+20,'text-anchor':'middle',style:'fill:white'},count);}x+=width;});y+=52;}[0,25,50,75,100].forEach(p=>svgNode(svg,'text',{x:210+p/100*790,y:y+7,'text-anchor':'middle'},p+'%'));el('distribution-note').textContent=`Persentase chunk per ukuran ${unit()}; rentang tinjauan ${limits().join('–')}. Semua strategi memakai batas yang sama. Batas ini bukan vonis kualitas atau batas input model.`;}
+const overlap=results.header_overlap;
+if(!overlap||overlap.fatal_error){el('overlap').textContent='Data overlap tidak tersedia.';}else{const failed=overlap.overlaps.filter(x=>!x.valid);el('overlap').textContent=`${failed.length} dari ${overlap.overlaps.length} pasangan gagal validasi prefix.\nNomor chunk: ${failed.map(x=>x.chunk).join(', ')||'Tidak ada'}.\nTotal kata prefix tambahan: ${overlap.overlap_prefix_words}.\nKonsistensi isi inti: ${report.header_core_comparison_errors.length?'perlu diperiksa':'identik dengan versi tanpa overlap'}.`;}
+el('issues').textContent=Object.entries(results).map(([key,r])=>r.fatal_error?`${names[key]}: ${r.fatal_error}`:`${names[key]}\nJSON: ${r.strict_json_error||'valid'}\nError schema: ${r.schema_errors.length}; duplikat: ${r.duplicate_chunk_indices.length}; tanpa sumber: ${r.missing_source_chunks.length}; tanpa halaman: ${r.missing_page_chunks.length}.\n${r.reconstruction.exact?'Rekonstruksi identik.':`Perbedaan pertama pada indeks kata ${r.reconstruction.first_mismatch_word} (berbasis 0).\nSumber: ${r.reconstruction.expected_excerpt}\nRekonstruksi: ${r.reconstruction.actual_excerpt}`}`).join('\n\n');
+el('strategy').addEventListener('change',drawLength);el('measure').addEventListener('change',()=>{drawLength();drawDistribution();});drawLength();drawDistribution();
+</script></body></html>

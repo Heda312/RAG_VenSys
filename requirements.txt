@@ -1,0 +1,28 @@
+# --- Core Deep Learning & PyTorch ---
+torch
+torchvision
+torchaudio
+
+# --- Vector Database & Storage ---
+chromadb
+
+# --- Cross-Encoder & Embedding Tools ---
+sentence-transformers
+transformers
+tokenizers
+huggingface-hub
+
+# --- PDF Loading & Text Processing ---
+pymupdf4llm
+pymupdf
+langdetect
+
+# --- Utility & HTTP Requests (Ollama Communication) ---
+requests
+pydantic
+tqdm
+numpy
+
+# --- Backend Web Framework (Buat Deployment API Nanti) ---
+fastapi
+uvicorn

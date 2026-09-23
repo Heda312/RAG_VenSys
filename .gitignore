@@ -146,6 +146,10 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# Postman
+postman/
+.postman/
+
 # mypy
 .mypy_cache/
 .dmypy.json
