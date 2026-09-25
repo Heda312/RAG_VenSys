@@ -1,13 +1,11 @@
-"""Ekstrak teks dari PDF digital ke TXT atau Markdown tanpa OCR."""
-
 from pathlib import Path
 
 import pymupdf4llm
 
 
 # Ubah nilai berikut sesuai file PDF dan format output yang ingin digunakan.
-INPUT_PDF = Path("input_pdf/Pedoman PI.pdf")
-OUTPUT_FILE = Path("output/Pedoman PIq.txt")
+INPUT_PDF = Path("D:\\RAG_Project\\storages\\inputs\\Understanding Deep Learning (Simon J.D. Prince).pdf")
+OUTPUT_FILE = Path("D:/RAG_Project/storages/outputs/pdf_sampel.txt")
 OUTPUT_FORMAT = "txt"
 
 

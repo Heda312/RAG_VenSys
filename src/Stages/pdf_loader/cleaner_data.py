@@ -3,8 +3,8 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent
-INPUT_FILE = BASE_DIR / "output/Pedoman PI.txt"
-OUTPUT_FILE = BASE_DIR / "output/Pedoman PI_cleaned.txt"
+INPUT_FILE = BASE_DIR / "D:/RAG_Project/storages/outputs/pdf_sampel.txt"
+OUTPUT_FILE = BASE_DIR / "D:/RAG_Project/storages/outputs/pdf_sampel_cleaned.txt"
 MIN_SYMBOL_REPEAT = 2
 
 
