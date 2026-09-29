@@ -4,7 +4,7 @@ from transformers import AutoTokenizer
 
 INPUT_TEXT = Path("D:/RAG_Project/storages/outputs/pdf_sampel_cleaned.txt")
 OUTPUT_FILE = Path("D:/RAG_Project/storages/outputs/pdf_sampel_chunks_token(test).json")
-TOKENIZER_MODEL = "BAAI/bge-m3"
+TOKENIZER_MODEL = "BAAI/bge-m3" #Model yang paling optimal untuk embedding multilingual. Bisa juga pakai "BAAI/bge-m3-small" untuk versi lebih ringan.
 CHUNK_TOKENS = 480
 OVERLAP_TOKENS = 96
 
@@ -16,7 +16,6 @@ def main():
     chunks, start = [], 0
 
     while start < len(words):
-        # Cari batas kata yang muat dalam budget token
         end = start + 1
         while end <= len(words) and len(tokenizer.encode(" ".join(words[start:end]), add_special_tokens=False)) <= CHUNK_TOKENS:
             end += 1
@@ -35,7 +34,6 @@ def main():
         if end >= len(words):
             break
 
-        # Cari titik geser mundur (start baru) untuk overlap
         next_start = end
         while next_start > start + 1 and len(tokenizer.encode(" ".join(words[next_start:end]), add_special_tokens=False)) < OVERLAP_TOKENS:
             next_start -= 1
