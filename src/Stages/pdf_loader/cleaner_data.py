@@ -1,12 +1,25 @@
 import re
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-BASE_DIR = Path(__file__).resolve().parent
-INPUT_FILE = BASE_DIR / "D:/RAG_Project/storages/outputs/pdf_sampel.txt"
-OUTPUT_FILE = BASE_DIR / "D:/RAG_Project/storages/outputs/pdf_sampel_cleaned.txt"
+INPUT_FILE = (
+    PROJECT_ROOT 
+    / "storages" 
+    / "outputs" 
+    / "extraction" 
+    / "Pedoman PI_1.txt"
+)
+
+OUTPUT_FILE = (
+    PROJECT_ROOT 
+    / "storages" 
+    / "outputs" 
+    / "extraction" 
+    / "Pedoman PI_1_cleaned.txt"
+)
+
 MIN_SYMBOL_REPEAT = 2
-
 
 def remove_repeated_symbols(text: str, min_repeat: int = MIN_SYMBOL_REPEAT) -> str:
     """Hapus simbol identik berulang, termasuk jika dipisahkan whitespace."""
@@ -42,7 +55,6 @@ def main() -> None:
 
     print(f"Simbol yang berulang minimal {MIN_SYMBOL_REPEAT} kali telah dihapus.")
     print(f"Hasil disimpan di: {OUTPUT_FILE}")
-
 
 if __name__ == "__main__":
     main()

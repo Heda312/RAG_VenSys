@@ -2,15 +2,31 @@ import json
 from pathlib import Path
 from transformers import AutoTokenizer
 
-INPUT_TEXT = Path("D:/RAG_Project/storages/outputs/pdf_sampel_cleaned.txt")
-OUTPUT_FILE = Path("D:/RAG_Project/storages/outputs/pdf_sampel_chunks_token(test).json")
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+INPUT_FILE = (
+    PROJECT_ROOT 
+    / "storages" 
+    / "outputs" 
+    / "extraction" 
+    / "Pedoman PI_cleaned.txt"
+)
+
+OUTPUT_FILE = (
+    PROJECT_ROOT 
+    / "storages" 
+    / "outputs" 
+    / "extraction" 
+    / "Pedoman PI_chunks.json"
+)
+
 TOKENIZER_MODEL = "BAAI/bge-m3" #Model yang paling optimal untuk embedding multilingual. Bisa juga pakai "BAAI/bge-m3-small" untuk versi lebih ringan.
 CHUNK_TOKENS = 480
 OVERLAP_TOKENS = 96
 
 def main():
     tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
-    raw_text = INPUT_TEXT.read_text(encoding="utf-8-sig")
+    raw_text = INPUT_FILE.read_text(encoding="utf-8-sig")
     words = raw_text.split()
 
     chunks, start = [], 0
@@ -28,7 +44,7 @@ def main():
             "text": chunk_text,
             "token_count": len(tokenizer.encode(chunk_text, add_special_tokens=False)),
             "input_token_count": len(tokenizer.encode(chunk_text, add_special_tokens=True)),
-            "source": INPUT_TEXT.name
+            "source": INPUT_FILE.name
         })
 
         if end >= len(words):
@@ -42,7 +58,7 @@ def main():
 
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(json.dumps(chunks, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"✅ Selesai: {len(chunks)} chunk dibuat!")
+    print(f"Selesai: {len(chunks)} chunk dibuat!")
 
 if __name__ == "__main__":
     main()
